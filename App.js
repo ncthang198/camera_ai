@@ -1,12 +1,4 @@
-/**
- * Sample React Native App
- * https://github.com/facebook/react-native
- *
- * @format
- * @flow strict-local
- */
-
-import React from 'react';
+import React, { useState } from 'react';
 import {
   SafeAreaView,
   StyleSheet,
@@ -14,61 +6,88 @@ import {
   View,
   Text,
   StatusBar,
+  Image
 } from 'react-native';
 
 import {
-  Header,
-  LearnMoreLinks,
   Colors,
-  DebugInstructions,
-  ReloadInstructions,
 } from 'react-native/Libraries/NewAppScreen';
+import ImagePicker from 'react-native-image-crop-picker';
 
-const App: () => React$Node = () => {
+const App = () => {
+  const [image, setImage] = useState("https://reactnative.dev/img/tiny_logo.png");
+
+  const createFormData = (photo, body) => {
+    const data = new FormData();
+
+    data.append('photo', {
+      name: photo.fileName,
+      type: photo.mime,
+      uri:
+        Platform.OS === 'android' ? photo.path : photo.path.replace('file://', ''),
+    });
+
+    Object.keys(body).forEach((key) => {
+      data.append(key, body[key]);
+    });
+    console.log(data)
+    return data;
+  };
+
+  const handleUploadPhoto = () => {
+    fetch('http://172.16.4.127:1999/api/v1/food/single_upload', {
+      method: 'POST',
+      body: createFormData(image, { name: '123' }),
+    })
+      .then((response) => response.json())
+      .then((response) => {
+        console.log('upload succes', response);
+        alert('Upload success!');
+        setImage(null);
+      })
+      .catch((error) => {
+        console.log('upload error', error);
+        alert('Upload failed!');
+      });
+  };
   return (
-    <>
-      <StatusBar barStyle="dark-content" />
-      <SafeAreaView>
-        <ScrollView
-          contentInsetAdjustmentBehavior="automatic"
-          style={styles.scrollView}>
-          <Header />
-          {global.HermesInternal == null ? null : (
-            <View style={styles.engine}>
-              <Text style={styles.footer}>Engine: Hermes</Text>
-            </View>
-          )}
-          <View style={styles.body}>
-            <View style={styles.sectionContainer}>
-              <Text style={styles.sectionTitle}>Step One</Text>
-              <Text style={styles.sectionDescription}>
-                Edit <Text style={styles.highlight}>App.js</Text> to change this
-                screen and then come back to see your edits.
-              </Text>
-            </View>
-            <View style={styles.sectionContainer}>
-              <Text style={styles.sectionTitle}>See Your Changes</Text>
-              <Text style={styles.sectionDescription}>
-                <ReloadInstructions />
-              </Text>
-            </View>
-            <View style={styles.sectionContainer}>
-              <Text style={styles.sectionTitle}>Debug</Text>
-              <Text style={styles.sectionDescription}>
-                <DebugInstructions />
-              </Text>
-            </View>
-            <View style={styles.sectionContainer}>
-              <Text style={styles.sectionTitle}>Learn More</Text>
-              <Text style={styles.sectionDescription}>
-                Read the docs to discover what to do next:
-              </Text>
-            </View>
-            <LearnMoreLinks />
-          </View>
-        </ScrollView>
-      </SafeAreaView>
-    </>
+    <SafeAreaView style={{ alignItems: "center", flex: 1 }}>
+      <Text onPress={() => {
+        console.log("hello ")
+        ImagePicker.openPicker({
+          width: 300,
+          height: 400,
+          cropping: true,
+          includeBase64: true
+        }).then(image => {
+          setImage(image)
+          console.log(image.data);
+        });
+      }}>Pick Image</Text>
+      <Text onPress={() => {
+        console.log("hello ")
+        ImagePicker.openCamera({
+          width: 300,
+          height: 400,
+          cropping: true,
+        }).then(image => {
+          setImage(image)
+          console.log(image);
+        });
+      }}>Open Camera</Text>
+      <Image
+        style={{
+          width: 300,
+          height: 300
+        }}
+        source={{ uri: image.path }}
+      />
+      <Text
+        onPress={handleUploadPhoto}
+      >
+        Upload
+          </Text>
+    </SafeAreaView>
   );
 };
 
