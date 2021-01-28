@@ -17,76 +17,78 @@ import ImagePicker from 'react-native-image-crop-picker';
 const App = () => {
   const [image, setImage] = useState("https://reactnative.dev/img/tiny_logo.png");
 
-  const createFormData = (photo, body) => {
+  const createFormData = (photo) => {
     const data = new FormData();
-
-    data.append('photo', {
-      name: photo.fileName,
+    console.log(photo, "path image")
+    // data.append('file', photo);
+    data.append('file', {
+      name: photo.path,
       type: photo.mime,
       uri:
         Platform.OS === 'android' ? photo.path : photo.path.replace('file://', ''),
     });
 
-    Object.keys(body).forEach((key) => {
-      data.append(key, body[key]);
-    });
     console.log(data)
     return data;
   };
 
-  const handleUploadPhoto = () => {
-    fetch('http://172.16.4.127:1999/api/v1/food/single_upload', {
-      method: 'POST',
-      body: createFormData(image, { name: '123' }),
-    })
-      .then((response) => response.json())
-      .then((response) => {
-        console.log('upload succes', response);
-        alert('Upload success!');
-        setImage(null);
-      })
-      .catch((error) => {
-        console.log('upload error', error);
-        alert('Upload failed!');
+  const handleUploadPhoto = async () => {
+    let data = createFormData(image)
+    try {
+      let res = await fetch('https://vnpost.vnit.top/api/api/FileData/InsertFile', {
+        method: 'POST',
+        body: data,
+        headers: {
+          'Content-Type': 'multipart/form-data; '
+        },
       });
+      let responseJson = await res.json();
+      console.log(responseJson, "response")
+      alert(responseJson)
+    } catch (error) {
+      console.log(error, "Loi gi day")
+    }
   };
   return (
     <SafeAreaView style={{ alignItems: "center", flex: 1 }}>
-      <Text onPress={() => {
-        console.log("hello ")
-        ImagePicker.openPicker({
-          width: 300,
-          height: 400,
-          cropping: true,
-          includeBase64: true
-        }).then(image => {
-          setImage(image)
-          console.log(image.data);
-        });
-      }}>Pick Image</Text>
-      <Text onPress={() => {
-        console.log("hello ")
-        ImagePicker.openCamera({
-          width: 300,
-          height: 400,
-          cropping: true,
-        }).then(image => {
-          setImage(image)
-          console.log(image);
-        });
-      }}>Open Camera</Text>
-      <Image
-        style={{
-          width: 300,
-          height: 300
-        }}
-        source={{ uri: image.path }}
-      />
-      <Text
-        onPress={handleUploadPhoto}
-      >
-        Upload
-          </Text>
+      <View style={{ height: 45, backgroundColor: "orange", width: "100%", justifyContent: "space-between", flexDirection: "row" }}>
+        <View style={{ justifyContent: "center", alignItems: "center", width: 80 }}></View>
+        <View style={{ justifyContent: "center", alignItems: "center", flex: 1 }}><Text style={{ fontSize: 18, fontWeight: "bold", color: "white" }}>CAMERA AI</Text></View>
+        <View style={{ justifyContent: "center", alignItems: "center", width: 80 }}><Text onPress={handleUploadPhoto} style={{ fontSize: 16, fontWeight: "bold", color: "white" }}>Upload</Text></View>
+      </View>
+      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+
+        <Image
+          style={{
+            width: 300,
+            height: 300
+          }}
+          source={{ uri: image ? image.path : "https://reactnative.dev/img/tiny_logo.png" }}
+        />
+      </View>
+      <View style={{ height: 80, width: "100%", justifyContent: "space-between", flexDirection: "row" }}>
+        <Text
+          style={{ fontSize: 18, fontWeight: "bold", color: "black", margin: 15 }}
+          onPress={() => {
+            ImagePicker.openPicker({
+              cropping: true,
+            }).then(image => {
+              setImage(image)
+              console.log(image);
+            });
+          }}>Pick Image</Text>
+        <Text
+          style={{ fontSize: 18, fontWeight: "bold", color: "black", margin: 15 }}
+          onPress={() => {
+            ImagePicker.openCamera({
+              cropping: true,
+            }).then(image => {
+              setImage(image)
+              console.log(image);
+            });
+          }}>Open Camera</Text>
+      </View>
+
     </SafeAreaView>
   );
 };
